@@ -174,17 +174,23 @@ def Run(iface, dest, fname):
 
 if __name__ == "__main__":
 
-  if not sys.argv[3:]:
-    print "Usage: bb_eth_upload <interface> <mac address> <firmware>"
+  default_fw = "../../bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img"
+
+  if not sys.argv[2:]:
+    print "Usage: bb_eth_upload <interface> <mac address> [<firmware>]"
     print
     print "<interface>   is the name of your network interface.  Most people"
     print "              will use 'eth0'."
     print "<mac address> should be of the form 6a:b3:f6:19:1d:d6"
     print "              This is on the sticker on your bifferboard."
-    print "<firmware>    is the filename of the kernel to flash."
+    print "[<firmware>]  is the filename of the kernel to flash.  If missing uses"
+    print "              '%s'" % default_fw
     print
     sys.exit(0)
 
   dest = GetMac(sys.argv[2])
-  Run(sys.argv[1], dest, sys.argv[3])
+  if sys.argv[3:]:
+    Run(sys.argv[1], dest, sys.argv[3])
+  else:
+    Run(sys.argv[1], dest, default_fw)
 
