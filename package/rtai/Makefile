@@ -29,7 +29,7 @@ define Package/liblxrt
 endef
 
 define Package/liblxrt/description
- This package contains the RTAI lxrt library
+ This package contains the RTAI lxrt library and kernel modules
 endef
 
 
@@ -58,8 +58,23 @@ define Build/Configure
 endef
 
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/base/include/*.h $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/include/asm-i386
+	$(CP) $(PKG_BUILD_DIR)/base/include/asm-i386 $(1)/usr/include/asm-i386
+	$(LN) $(1)/usr/include/asm-i386 $(1)/usr/include/asm
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/base/scripts/rtai-{config,info,load} $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/base/sched/liblxrt/.libs/liblxrt.a $(1)/usr/lib
+endef
+
 define Package/liblxrt/install
-	echo "TODO: installing lxrt"
+	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)
+	$(CP) $(PKG_BUILD_DIR)/base/arch/i386/hal/rtai_hal.ko $(1)/lib/modules/$(LINUX_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/base/sched/rtai_lxrt.ko $(1)/lib/modules/$(LINUX_VERSION)/
+	$(CP) $(PKG_BUILD_DIR)/base/ipc/fifos/rtai_fifos.ko $(1)/lib/modules/$(LINUX_VERSION)/
 endef
 
 $(eval $(call BuildPackage,liblxrt))
