@@ -22,7 +22,7 @@ DEFAULT_PACKAGES += wpad-mini kmod-libphy kmod-r6040 kmod-input-core \
 
 define Target/Description
         Build firmware images for RDC321x based routers
-        (e.g. Airlink101 AR525W, Linksys WRT54GR, Sitecom WL-153)
+        (e.g. Bifferboard, Airlink101 AR525W, Linksys WRT54GR, Sitecom WL-153)
 endef
 
 $(eval $(call BuildTarget))
