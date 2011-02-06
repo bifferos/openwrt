@@ -65,7 +65,7 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/base/include/asm-i386 $(1)/usr/include/asm-i386
 	$(LN) $(1)/usr/include/asm-i386 $(1)/usr/include/asm
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/base/scripts/rtai-{config,info,load} $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/base/scripts/rtai-{config,info,load} $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/base/sched/liblxrt/.libs/liblxrt.a $(1)/usr/lib
 endef
