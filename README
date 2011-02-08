@@ -4,6 +4,7 @@ to work better on the Bifferboard.
 If you're unsure where to start try the following:
 
 $ cp bifferboard_example_config .config
+$ make package/symlinks
 $ make
 
 After some time you'll find your firmware in bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img
