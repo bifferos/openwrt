@@ -174,8 +174,11 @@ def Run(iface, dest, fname):
 
 if __name__ == "__main__":
 
-  default_fw = "../../bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img"
-
+  this_script = os.path.realpath(__file__)
+  this_dir = os.path.split(this_script)[0]
+  
+  default_fw = os.path.join(this_dir,"../../bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img")
+  
   if not sys.argv[2:]:
     print "Usage: bb_eth_upload <interface> <mac address> [<firmware>]"
     print
