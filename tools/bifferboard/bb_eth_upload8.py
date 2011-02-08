@@ -174,7 +174,7 @@ def Run(iface, dest, fname):
 
 if __name__ == "__main__":
 
-  this_script = os.path.realpath(__file__)
+  this_script = os.path.abspath(__file__)
   this_dir = os.path.split(this_script)[0]
   
   default_fw = os.path.join(this_dir,"../../bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img")
