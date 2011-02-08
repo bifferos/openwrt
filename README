@@ -1,26 +1,35 @@
-This is the buildsystem for the OpenWrt Linux distribution
+This is the buildsystem for the OpenWrt Linux distribution, hacked
+to work better on the Bifferboard.
 
-Please use "make menuconfig" to configure your appreciated
-configuration for the toolchain and firmware.
+If you're unsure where to start try the following:
+
+$ cp bifferboard_example_config .config
+$ make
+
+After some time you'll find your firmware in bin/rdc/openwrt-rdc-jffs2-64k-bifferboard.img
+
+There is another firmware for 128k sector devices, please ignore that.  
+You can play with the squashfs firmware if you know what you're doing.
+
+Run 'make menuconfig' prior to running make if you want to select 
+your own packages for inclusion into the firmware.  You can do that
+at any time and then re-run 'make'.  The build system will only rebuild
+the bits it needs to.
 
 You need to have installed gcc, binutils, patch, bzip2, flex,
 make, gettext, pkg-config, unzip, libz-dev and libc headers.
 
-Simply running 'make' will build your firmware.
-It will download all sources, build the cross-compile toolchain, 
-the kernel and all choosen applications.
+A full install of Slackware 13.1 seems to do fine for me.
 
-You can use scripts/flashing/flash.sh for remotely updating your embedded
-system via tftp.
+When the firmware is built, you can flash it to the device over the ethernet
+with:
+./tools/bifferboard/bb_eth_upload8.py eth0 00:01:02:03:04:05
 
-The OpenWrt system is documented in docs/. You will need a LaTeX distribution
-and the tex4ht package to build the documentation. Type make -C docs/ to build it.
+(You can leave off the firmware name, the script defaults to finding the
+jffs image above).
 
-Building your own firmware you need to have access to a Linux, BSD or MacOSX system.
-Cygwin will not be supported because of the lack of case sensitiveness.
+Any questions about this firmware please ask on the forum:
+http://groups.google.com/group/bifferboard/
 
-Sunshine!
-	Your OpenWrt Project
-	http://openwrt.org
-
-
+Cheers!
+Biff.
