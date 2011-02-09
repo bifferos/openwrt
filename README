@@ -26,8 +26,9 @@ When the firmware is built, you can flash it to the device over the ethernet
 with:
 ./tools/bifferboard/bb_eth_upload8.py eth0 00:01:02:03:04:05
 
-(You can leave off the firmware name, the script defaults to finding the
-jffs image above).
+Where 00:01:02:03:04:05 is the MAC address of your board (see the label).
+You can leave off the firmware name, the script defaults to finding the
+jffs image above unless you specify something else.
 
 Any questions about this firmware please ask on the forum:
 http://groups.google.com/group/bifferboard/
