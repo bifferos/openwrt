@@ -266,7 +266,7 @@ class MainGUI:
       self.flash = gtk.combo_box_new_text()
       for i in self.flash_sizes:
         self.flash.append_text("%d MB" %i)
-      self.flash.set_active(0)
+      self.flash.set_active(2)
       self.AddToTable(table, "Flash Size", 3, self.flash)
 
       self.config_chunk = gtk.Label("")
@@ -301,7 +301,7 @@ class MainGUI:
       self.AddToTable(table, "Load address", 9, self.cfg_loadaddress)
 
       self.cfg_cmndline = gtk.Entry()
-      self.cfg_cmndline.set_text("console=uart,io,0x3f8 init=/etc/preinit root=/dev/sda1 rootwait")
+      self.cfg_cmndline.set_text("console=uart,io,0x3f8 root=squashfs,jffs2")
       self.AddToTable(table, "Kernel cmndline", 10, self.cfg_cmndline)
 
       self.cfg_kernelmax = gtk.Entry()
@@ -337,7 +337,7 @@ class MainGUI:
 
     def ChangeFlashSize(self, widget, data=None):
       self.config_chunk.set_text("%d" % self.GetConfigChunk())
-      d = {0:"0xf0000", 1:"0x200000", 2:"0x200000"}[self.flash.get_active()]
+      d = {0:"0xf0000", 1:"0x100000", 2:"0x100000"}[self.flash.get_active()]
       self.cfg_kernelmax.set_text(d)
       
 
