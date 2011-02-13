@@ -11,10 +11,12 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
-#include <mtd/mtd-user.h>
+// #include <linux/mtd/mtd.h>
 #include "md5.h"
 
 
@@ -75,12 +77,21 @@ void print_md5(md5_byte_t* d)
 }
 
 
+// mtd file.
+static int fd = -1;
+
+
 // read the config
 void config_init()
 {
   md5_byte_t digest[16];
   int found_term, i;
-  int fd = open("/dev/mtd0", O_RDONLY);
+  fd = open("/dev/mtdblock0", O_RDWR);
+  if (fd == -1)
+  {
+    printf("Unable to open /dev/mtdblock0\n");
+    _exit(-1);
+  }
   lseek(fd, 0x4000, SEEK_SET);
   read(fd, &g_vals, sizeof(struct _cfg));
 
@@ -88,7 +99,7 @@ void config_init()
 
   if (memcmp(g_vals.digest, digest, sizeof(digest)) !=0)
   {
-    printf("WARNING: Configuration md5 mismatch, configuration may have been corrupted\n");
+    printf("WARNING: Configuration md5 mismatch, Biffboot config may have been corrupted\n");
     printf("Expected: ");  print_md5(digest);  printf("\n");
     printf("Actual:   ");    print_md5(g_vals.digest);  printf("\n");
   }
@@ -104,10 +115,62 @@ void config_init()
   }
   if (!found_term)
   {
-    printf("Kernel command-line lacks termination, configuration may have been corrupted\n");
+    printf("Kernel command-line lacks termination, Biffboot config may have been corrupted\n");
     // add some termination
     g_vals.val.cmndline[sizeof(g_vals.val.cmndline)-1] = 0;
   }
+}
+
+
+int config_write()
+{
+  //struct erase_info_user erase;
+  int count;
+  //erase.length = 0x2000;
+  //erase.start = 0x4000;
+  
+  //if (ioctl(fd, MEMUNLOCK, &erase) != 0)
+  //{
+  //  printf("MEMUNLOCK ioctl failed\n");
+  //  perror("Error:");
+  //  return 0;
+  //}
+  
+  //if (ioctl(fd, MEMERASE, &erase) != 0)
+  //{
+  //  printf("MEMERASE ioctl failed\n");
+  //  perror("Error:");
+  //  return 0;
+  //}
+
+  if (lseek(fd, 0x4000, SEEK_SET) != 0x4000)
+  {
+    printf("Unable to seek to config offset\n");
+    perror("Error:");
+    return 0;
+  }
+  printf("Start of write to flash, do not switch off!\n");
+  count = write(fd, &g_vals, sizeof(g_vals));
+  if (count != 0x2000)
+  {
+    printf("MTD write failed, tried to write %d, wrote %d\n", 0x2000, count);
+    perror("Error:");
+    return 0;
+  }
+  
+  // close before signalling write complete, to flush.
+  close(fd);
+  
+  printf("Write complete.\n");
+  
+  //if (ioctl(fd, MEMLOCK, &erase) !=0)
+  //{
+  //  printf("MEMLOCK ioctl failed\n");
+  //  perror("Error:");
+  //  return 0;
+  //}
+  
+  return 1;
 }
 
 
@@ -131,7 +194,7 @@ cfg_param_t g_params[] = {
  { "bootsource", CFG_BOOTSOURCE, "flash|MMC|Net" },
  { "console", CFG_CONSOLE, "disabled|enabled" },
  { "nic", CFG_NIC, "disabled|enabled|promiscuous" },
- { "boottype", CFG_BOOTTYPE, "flat binary|Linux|Multiboot|Coreboot" },
+ { "boottype", CFG_BOOTTYPE, "flatbin|Linux|Multiboot|Coreboot" },
  { "loadaddress", CFG_LOADADDRESS, "<RAM address>" },
  { "cmndline", CFG_CMNDLINE, "<string>" },
  { "kernelmax", CFG_KERNELMAX, "<count of 64k sectors>" },
@@ -176,7 +239,7 @@ char* render(int index)
         case CFG_BOOTTYPE:
   	  switch (g_vals.val.boottype)
   	  {
-	     case 0: return "flat binary";
+	     case 0: return "flatbin";
 	     case 1: return "Linux";
 	     case 2: return "Multiboot";
 	     case 3: return "Coreboot";
@@ -199,8 +262,140 @@ char* render(int index)
 }
 
 
+// Set the parameter to the given value
+int setval(int index, char* val)
+{
+  int v;
+  static char buffer[sizeof(g_vals.val.cmndline)];
+  switch (index)
+  {
+  	case CFG_BOOTSOURCE:
+	  if (strcmp(val,"flash")==0)
+	  {
+	    v = 0;
+	  }
+	  else if (strcmp(val, "MMC")==0)
+	  {
+	    v = 1;
+	  }
+	  else if (strcmp(val, "Net")==0)
+	  {
+	    v = 2;
+	  }
+	  else
+	  {
+	    return 0;  // not setting, invalid bootsource.
+	  }
+	  g_vals.val.bootsource = v;
+	  break;
+	  
+        case CFG_CONSOLE:
+          if (strcmp(val, "disabled")==0)
+          {
+            v = 0;
+          }
+          else if (strcmp(val, "enabled")==0)
+          {
+            v = 1;
+          }
+          else
+          {
+            return 0;
+          }
+  	  g_vals.val.console = v;
+          break;
+        case CFG_NIC:
+          if (strcmp(val, "disabled")==0)
+          {
+            v = 0;
+          }
+          else if (strcmp(val, "enabled")==0)
+          {
+            v = 1;
+          }
+          else if (strcmp(val, "promiscuous")==0)
+          {
+            v = 2;
+          }
+          else
+          {
+            return 0;
+          }
+  	  g_vals.val.nic = v;
+          break;
+          
+        case CFG_BOOTTYPE:
+          if (strcmp(val, "flatbin")==0)
+          {
+            v = 0;
+          }
+          else if (strcmp(val, "Linux")==0)
+          {
+            v = 1;
+          }
+          else if (strcmp(val, "Multiboot")==0)
+          {
+            v = 2;
+          }
+          else if (strcmp(val, "Coreboot")==0)
+          {
+            v = 3;
+          }
+          else
+          {
+            return 0;
+          }
+  	  g_vals.val.boottype = v;
+  	  break;
+  	  
+        case CFG_LOADADDRESS:
+          if (strncmp(val, "0x", 2)!=0)
+          {
+            return 0;  // needs to be in hex format
+          }
+          val += 2;
+          if (sscanf(val, "%x", &v) != 1)
+          {
+	    return 0;  // not recognised as hex number?
+          }
+          g_vals.val.loadaddress = v;
+          break;
+          
+        case CFG_CMNDLINE:
+          if (strlen(val)>=sizeof(g_vals.val.cmndline))
+          {
+            return 0;  // string too long.
+          }
+          strcpy(g_vals.val.cmndline, val);
+          break;
+          
+        case CFG_KERNELMAX:
+          if (strncmp(val, "0x", 2)!=0)
+          {
+            return 0;  // needs to be in hex format
+          }
+          val += 2;
+          if (sscanf(val, "%x", &v) != 1)
+          {
+	    return 0;  // not recognised as hex number?
+          }
+          g_vals.val.kernelmax = v;
+          break;
+        default:
+          return 0;
+  }
+  
+  // update the md5 of the block
+  config_get_md5(g_vals.digest);
+  
+  return 1;
+}
+
+
+
+
 // Print all the config values
-void config_print()
+void config_print_all()
 {
   cfg_param_t* param;
   printf("Current configuration:\n");
@@ -236,7 +431,28 @@ int config_print_one(char* param)
 }
 
 
-// Print one config values
+
+void help()
+{
+  cfg_param_t* param;
+  
+  printf("Usage: biffconfig [set|get] <parameter> [value]\n");
+  printf("\nWhere <parameter> can be one of the following:\n");
+  
+  param = g_params;
+  while (param->name)
+  {
+    printf(" %12s  %s\n", param->name, param->help);
+    param++;
+  }
+
+
+  _exit(-1);
+}
+
+
+
+// set one config value
 int config_set_one(char* param, char* value)
 {
   cfg_param_t* p;
@@ -246,10 +462,28 @@ int config_set_one(char* param, char* value)
   found = 0;
   while (p->name)
   {
+    // match to the required parameter
     if (strcmp(p->name, param)==0)
     {
       // set the value p->index.
-      printf("TODO: Setting values is unsupported\n");
+      if (setval(p->index, value)==0)
+      {
+        printf("Parameter '%s' cannot be set to '%s'\n", p->name, value);
+        help();
+      }
+      
+      // Write the block back
+      
+      // Don't stop now for anything - we want to avoid corruption of the config!
+      //sigaction(SIGINT, SIG_IGN, NULL);
+      //sigaction(SIGTSTP, SIG_IGN, NULL);
+      
+      if (!config_write())
+      {
+        printf("Unable to write to flash, cannot update config\n");
+        _exit(-1);
+      }
+      
       found = 1;
       break;
     }
@@ -262,12 +496,6 @@ int config_set_one(char* param, char* value)
 #define DEVICE "/dev/mtd0"
 
 
-void help()
-{
-  printf("Usage: biffconfig [set|get] <parameter> [value]\n");
-  _exit(-1);
-}
-
 
 int main(int argc, char *argv[])
 {
@@ -276,7 +504,7 @@ int main(int argc, char *argv[])
 	switch (argc)
 	{
 	  case 1:
-		config_print();
+		config_print_all();
 		break;
 	  case 2:
 	  	help();
