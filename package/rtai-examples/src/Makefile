@@ -1,11 +1,11 @@
 
 
-all: rtai-led-blink
+all: rtai-led-demo
 
 
-rtai-led-blink: rtai-led-blink.c
+rtai-led-demo: rtai-led-demo.c
 	$(CC) $(LXRT_CFLAGS) -o $@ $< $(LXRT_LDFLAGS) -llxrt
 
 clean:
-	rm -f *.o *~ rtai-led-blink
+	rm -f *.o *~ rtai-led-demo
 
