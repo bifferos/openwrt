@@ -92,7 +92,7 @@ int main(void) {
         signal(SIGKILL, cleanup);
         
         if (!(maint = rt_task_init(nam2num("MAIN"), 1, 0, 0))) {
-                printf("Cannot initialise main tastk.\n");
+                printf("Cannot initialise main task.\n");
                 exit(1);
         }
 

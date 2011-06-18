@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtai-led-blink
 PKG_RELEASE:=1
+PKG_BUILD_DEPENDS:=liblxrt libpthread
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -19,7 +20,7 @@ define Package/rtai-led-blink
   SECTION:=utils
   CATEGORY:=Base system
   TITLE:=RTAI led blink example
-  DEPENDS:=+liblxrt
+  DEPENDS:=+liblxrt +libpthread
 endef
 
 define Package/rtai-led-blink/description
@@ -33,10 +34,10 @@ define Build/Prepare
 endef
 
 define Build/Compile
-#	echo $(STAGING_DIR)/usr/bin/rtai-config
 	$(MAKE) -C $(PKG_BUILD_DIR) \
-		LXRT_CFLAGS=-I$(STAGING_DIR)/usr/include 
-#		LXRT_LDFLAGS=$(shell $(STAGING_DIR)/usr/bin/rtai-config --lxrt-ldflags)
+		CC="$(shell $(STAGING_DIR)/usr/bin/rtai-config --cc)" \
+		LXRT_CFLAGS="-I$(STAGING_DIR)/usr/include -Wall -Wstrict-prototypes -pipe" \
+		LXRT_LDFLAGS="-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib -lpthread"
 endef
 
 define Package/rtai-led-blink/install
